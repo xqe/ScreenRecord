@@ -1,5 +1,6 @@
 package com.xqe.screenrecord.model;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
@@ -46,13 +47,11 @@ public class ScreenShotModel {
     private ScreenShotModel() {
     }
 
-    public ScreenShotModel getInstance() {
+    public static ScreenShotModel getInstance() {
         return Holder.INSTANCE;
     }
 
-    public void requestPermission() {
-        //todo 请求录屏权限
-    }
+
 
     //选择编码器级别
     @SuppressWarnings("deprecation")
@@ -73,11 +72,10 @@ public class ScreenShotModel {
         return null;
     }
 
-    public void init(Context context) {
+    public void init(MediaProjectionManager manager,WindowManager windowManager) {
         isRunning = false;
-        projectionManager = (MediaProjectionManager) context.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+        projectionManager = manager;
         DisplayMetrics displayMetrics = new DisplayMetrics();
-        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (windowManager != null) {
             windowManager.getDefaultDisplay().getRealMetrics(displayMetrics);
             screenDensity = displayMetrics.densityDpi;
@@ -86,7 +84,7 @@ public class ScreenShotModel {
         }
     }
 
-    public void setRecordData(Intent intent, int resultCode) {
+    public void setRecordData(int resultCode,Intent intent) {
         this.resultCode = resultCode;
         this.intent = intent;
     }
