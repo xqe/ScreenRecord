@@ -1,7 +1,5 @@
 package com.xqe.screenrecord.model;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -12,7 +10,6 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Surface;
@@ -47,7 +44,25 @@ public class ScreenRecordModel implements Runnable {
         return Holder.INSTANCE;
     }
 
-    public void init(MediaProjection mediaProjection,WindowManager windowManager) {
+    //选择编码器级别
+    private static MediaCodecInfo selectCodec() {
+        int codecCount = MediaCodecList.getCodecCount();
+        for (int i = 0; i < codecCount; i++) {
+            MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
+            if (!codecInfo.isEncoder()) {
+                continue;
+            }
+            String[] types = codecInfo.getSupportedTypes();
+            for (String type : types) {
+                if (MediaFormat.MIMETYPE_VIDEO_AVC.equalsIgnoreCase(type)) {
+                    return codecInfo;
+                }
+            }
+        }
+        return null;
+    }
+
+    public void init(MediaProjection mediaProjection, WindowManager windowManager) {
         isRunning = false;
         this.mediaProjection = mediaProjection;
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -85,6 +100,9 @@ public class ScreenRecordModel implements Runnable {
         isRunning = false;
     }
 
+    /**
+     * 初始化编码器
+     */
     private void initMediaCodec() {
         //1.实例化MediaCodecInfo
         int maxCodecProfileLevel = MediaCodecInfo.CodecProfileLevel.AVCLevel1;
@@ -106,7 +124,7 @@ public class ScreenRecordModel implements Runnable {
         //2.创建媒体格式
         MediaFormat format = new MediaFormat();
         //设置文件类型为H264的MIME类型
-        format.setString(MediaFormat.KEY_MIME,MediaFormat.MIMETYPE_VIDEO_AVC);
+        format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_VIDEO_AVC);
         //设置媒体内容宽高
         format.setInteger(MediaFormat.KEY_WIDTH, displayWidth);
         format.setInteger(MediaFormat.KEY_HEIGHT, displayHeight);
@@ -136,7 +154,7 @@ public class ScreenRecordModel implements Runnable {
     }
 
     /**
-     * 初始化编码器、启动录屏
+     * 启动录屏
      */
     private void initVirtualDisplay() {
         // 请求一个surface用于编码器的输入
@@ -153,24 +171,6 @@ public class ScreenRecordModel implements Runnable {
         mediaCodec.start();
         Log.i(TAG, "initEncoderAndVirtualDisplay: success");
 
-    }
-
-    //选择编码器级别
-    private static MediaCodecInfo selectCodec() {
-        int codecCount = MediaCodecList.getCodecCount();
-        for (int i = 0; i < codecCount; i++) {
-            MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(i);
-            if (!codecInfo.isEncoder()) {
-                continue;
-            }
-            String[] types = codecInfo.getSupportedTypes();
-            for (String type : types) {
-                if (MediaFormat.MIMETYPE_VIDEO_AVC.equalsIgnoreCase(type)) {
-                    return codecInfo;
-                }
-            }
-        }
-        return null;
     }
 
     @Override
